@@ -25,8 +25,8 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
 
         # つかうやつを列挙だけしておく
         self.z = None 
-        self.dW = None #dJ/dW^l
-        self.db = None # dJ/db^l
+        self.dW = None
+        self.db = None
         self.delta = None 
         self.W = None
         self.u = None 
@@ -58,9 +58,10 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         self.u = np.dot(self.backward_layer.z, self.W) + self.b
         self.z = self.backward_layer.activation_function(self.u)
 
-    def back_propagation(self, output=False):
+    def back_propagation(self):
         """forward_layerの情報からdW, dbをつくる
-        これnet側で実装したほうがいいかも"""
+        これneuralnet側で実装したほうがいいかも
+        結局output_layerはneuralnet側で別に実装(0104)"""
         self.delta = self.activation_function(self.u, differential=True) * self.forward_layer.o
         self.o = np.dot(self.delta, self.W.T)
         self.dW = np.dot(self.backward_layer.z.T, self.delta)
@@ -146,7 +147,11 @@ class NeuralNet(object):
         for i in range(1, self.layer_number):
             self.network[i].update_weight()
 
-
+    def train_loop(self, X, T):
+        """iteration回trainを実行（変数がダブっている）"""
+        for _ in range(self.iteration):
+            self.train(X, T)
+    
 
 
         
