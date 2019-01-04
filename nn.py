@@ -120,8 +120,8 @@ class NeuralNet(object):
             self.network.append(Layer(layer_index, layer_number))
             layer_index += 1
 
-        # 3. output_layerをつくる
-        self.network.append(Layer(self.layer_number - 1, self.output_shape))
+        # 3. output_layerをつくる (ソフトマックス回帰をするのでsoftmax)
+        self.network.append(Layer(self.layer_number - 1, self.output_shape, activation_function=softmax))
 
         ## 現時点で self.network = [input_layer, layer1, ..., layer5, output_layer]みたいになってる
 
@@ -138,11 +138,11 @@ class NeuralNet(object):
         for layer in self.network:
             layer.init_weight()
 
-    def train(self, data, info=True):
+    def train(self):
         """学習を1反復行う（バッチ）"""
-        N = len(data)
-        X = data.X
-        T = data.T
+        N = len(self.train_data)
+        X = self.train_data.X
+        T = self.train_data.T
 
         # 1. input_layerのzを初期化
         self.network[0].z = X
@@ -165,10 +165,10 @@ class NeuralNet(object):
         for i in range(1, self.layer_number):
             self.network[i].update_weight()
 
-    def train_loop(self, X, T):
+    def train_loop(self, epoch=10): # 後々バッチサイズ変えるかもしれないし、でもepochは今いらない
         """iteration回trainを実行（変数がダブっている）"""
         for _ in range(self.iteration):
-            self.train(X, T)
+            self.train()
 
     def set_data(self, train_X, train_T, test_X, test_T):
         self.train_data = Data(train_X, train_T)

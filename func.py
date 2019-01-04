@@ -15,7 +15,12 @@ def sigmoid(x, differential=False):
         return (1 - sgm) * sgm
     else:
         return sgm
-        
+
+def softmax(x):
+    x = np.exp(x)
+    return x / np.tile(np.sum(x, axis=1), (np.shape(x)[1], 1)).T
+    # ベクトル(v,)を(x,1)でtileするとshapeは(x,v)
+
 def cross_entropy_error(X, T, N):
     return -1 * np.sum(np.log(X) * T) / N
 
