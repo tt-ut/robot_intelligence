@@ -46,7 +46,6 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         if forward_layer != None:    
             self.forward_layer = forward_layer   # l+1
             
-    
     def init_weight(self):
         """標準正規分布N(0,1) * e = N(0, e^2)に従うようにする
             バイアスは定数で初期化してもいいかも（分類4参照）"""
@@ -59,7 +58,7 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         self.u = np.dot(self.backward_layer.z, self.W) + self.b
         self.z = self.backward_layer.activation_function(self.u)
 
-    def back_propagation(self):
+    def back_propagation(self, output=False):
         """forward_layerの情報からdW, dbをつくる
         これnet側で実装したほうがいいかも"""
         self.delta = self.activation_function(self.u, differential=True) * self.forward_layer.o
@@ -76,7 +75,7 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
 class NeuralNet(object):
     """ニューラルネットを生成するクラス"""
 
-    def __init__(self, input_shape, output_shape, layer_list, activation_function=None, loss_function=cross_entropy_error, learning_rate=0.01):
+    def __init__(self, input_shape, output_shape, layer_list, iteration, activation_function=None, loss_function=cross_entropy_error, learning_rate=0.01):
         """activation_functionがNoneなら個別に指定される必要あり
         MNISTなら input_shape = 28*28, output_shape = 10 データ数10000はどう表現しようか
         layer_list = [100, 24, 24]みたいな？
@@ -87,31 +86,73 @@ class NeuralNet(object):
         self.activation_function = activation_function # 暫く使わない
         self.learning_rate = learning_rate
         self.network = [] # ここにappendとかしていく
+        self.iteration = iteration
+        
         # layer_list = [1, 2, ..., L-1番目のレイヤ次元数]みたいに決める
         # [input_shape, `layer_list, output_shape]の順番で流れる
-        self.layer_number = len(layer_list) + 2
+        self.layer_number = len(layer_list) + 2 # == self.networkの長さ
 
-        # 1. 以下ネットワークを作っていく
+        ###ネットワークを初期化する###
 
-        ## 1. input_layerをつくる
+        # 1. input_layerをつくる
         self.network.append(Layer(0, self.input_shape))
 
-        ## 2. hidden_layerをつくる (とりあえず活性化関数はsigmoid)
+        # 2. hidden_layerをつくる (とりあえず活性化関数はsigmoid)
         layer_index = 1
         for layer_number in layer_list:
             self.network.append(Layer(layer_index, layer_number))
             layer_index += 1
 
-        ## 3. output_layerをつくる
+        # 3. output_layerをつくる
         self.network.append(Layer(self.layer_number - 1, self.output_shape))
 
         ## 現時点で self.network = [input_layer, layer1, ..., layer5, output_layer]みたいになってる
 
-        ## 4. layer間の親子関係を設定
+        # 4. layer間の親子関係を設定
         for i in range(self.layer_number):
             if i==0:
                 self.network[i].set_relation(None, self.network[i+1])
+            elif i==self.layer_number-1:
+                self.network[i].set_relation(self.network[i-1], None)
             else:
                 self.network[i].set_relation(self.network[i-1], self.network[i+1])
+        
+        # 5. 重みの初期化
+        for layer in self.network:
+            layer.init_weight()
+
+    def train(self, X, T):
+        """学習を1反復行う（バッチ）"""
+        N = np.shape(X)[0]
+
+        # 1. input_layerのzを初期化
+        self.network[0].z = X
+
+        # 2. forward propagation
+        for i in range(1, self.layer_number):
+            self.network[i].forward_propagation()
+
+        # 3. output_layerにおける誤差を計算
+        self.network[-1].delta = (self.network[-1].z - T) / N
+        self.network[-1].dW = np.dot(self.network[-2].z.T, self.network[-1].delta)
+        self.network[-1].db = np.dot(np.ones(N), self.network[-1].delta)
+        self.network[-1].o = np.dot(self.network[-1].delta, self.network[-1].W.T)
+
+        # 4. back propagation
+        for i in range(self.layer_number-2, 0, -1): # hidden_layerのindexを逆順
+            self.network[i].back_propagation()
+        
+        # 5 重みの更新
+        for i in range(1, self.layer_number):
+            self.network[i].update_weight()
+
+
+
+
+        
+
+
+
+        
 
 
