@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from func import * # 関数リスト
 
-class Layer(object):
+class Layer(object): # l番目のやつの情報をすべて持つだけにしようと思う
     """レイヤの親クラス"""
 
     def __init__(self, input_size, forward_layer, layer_number, activation_function=None, weight_init=0.01, learning_rate=0.01):
@@ -20,6 +20,7 @@ class Layer(object):
         self.layer_number = layer_number
         self.activation_function = activation_function
         self.weight_init = weight_init
+        self.learning_rate = learning_rate
 
     def init_weight(self):
         """標準正規分布N(0,1) * e = N(0, e^2)に従うようにする
@@ -59,4 +60,5 @@ class NeuralNet(object):
         self.activation_function = activation_function
         self.learning_rate = learning_rate
         self.network = [] # ここにappendとかしていく
+
         
