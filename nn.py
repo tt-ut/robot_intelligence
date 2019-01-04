@@ -14,7 +14,7 @@ from func import * # 関数リスト
 class Layer(object): # l番目のやつの情報をすべて持つだけにしようと思う
     """レイヤの親クラス"""
 
-    def __init__(self, unit_number, layer_depth, activation_function=sigmoid, weight_init=0.01, learning_rate=0.01):
+    def __init__(self, layer_index, unit_number, activation_function=sigmoid, weight_init=0.01, learning_rate=0.01):
         """
         forward_layer: 次のレイヤのインスタンス
         input_size: int いわゆる i のこと
@@ -33,16 +33,19 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         self.o = None
         self.N = np.shape(self.z)[0] #ぜったいにここじゃないどこか
 
-        self.layer_depth = layer_depth
+        self.layer_index = layer_index
         self.activation_function = activation_function
         self.weight_init = weight_init
         self.learning_rate = learning_rate
 
-    def set_relation(self, backward_layer, forward_layer, input_layer=False):
-        if not input_layer:
+    def set_relation(self, backward_layer, forward_layer):
+        """input_layerとoutput_layerの処理を少し変える"""
+        if backward_layer != None:
             self.backward_layer = backward_layer # l-1
             self.output_size = self.backward_layer.input_size
-        self.forward_layer = forward_layer   # l+1
+        if forward_layer != None:    
+            self.forward_layer = forward_layer   # l+1
+            
     
     def init_weight(self):
         """標準正規分布N(0,1) * e = N(0, e^2)に従うようにする
@@ -69,8 +72,6 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         self.W = self.W - self.learning_rate * self.W
         self.b = self.b - self.learning_rate * self.b
 
-class InputLayer(Layer):
-    
 
 class NeuralNet(object):
     """ニューラルネットを生成するクラス"""
@@ -78,17 +79,39 @@ class NeuralNet(object):
     def __init__(self, input_shape, output_shape, layer_list, activation_function=None, loss_function=cross_entropy_error, learning_rate=0.01):
         """activation_functionがNoneなら個別に指定される必要あり
         MNISTなら input_shape = 28*28, output_shape = 10 データ数10000はどう表現しようか
+        layer_list = [100, 24, 24]みたいな？
         """
         self.input_shape = input_shape
         self.output_shape = output_shape
         self.loss_function = loss_function
-        self.activation_function = activation_function
+        self.activation_function = activation_function # 暫く使わない
         self.learning_rate = learning_rate
         self.network = [] # ここにappendとかしていく
         # layer_list = [1, 2, ..., L-1番目のレイヤ次元数]みたいに決める
         # [input_shape, `layer_list, output_shape]の順番で流れる
-        
-        # 以下ネットワークを作っていく
+        self.layer_number = len(layer_list) + 2
 
-        # 1. input_layerをつくる
-        self.network.append(Layer(0, None, ))
+        # 1. 以下ネットワークを作っていく
+
+        ## 1. input_layerをつくる
+        self.network.append(Layer(0, self.input_shape))
+
+        ## 2. hidden_layerをつくる (とりあえず活性化関数はsigmoid)
+        layer_index = 1
+        for layer_number in layer_list:
+            self.network.append(Layer(layer_index, layer_number))
+            layer_index += 1
+
+        ## 3. output_layerをつくる
+        self.network.append(Layer(self.layer_number - 1, self.output_shape))
+
+        ## 現時点で self.network = [input_layer, layer1, ..., layer5, output_layer]みたいになってる
+
+        ## 4. layer間の親子関係を設定
+        for i in range(self.layer_number):
+            if i==0:
+                self.network[i].set_relation(None, self.network[i+1])
+            else:
+                self.network[i].set_relation(self.network[i-1], self.network[i+1])
+
+
