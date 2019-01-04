@@ -15,9 +15,8 @@ def sigmoid(x, differential=False):
         return (1 - sgm) * sgm
     else:
         return sgm
+        
+def cross_entropy_error(X, T, N):
+    return -1 * np.sum(np.log(X) * T) / N
 
-def cross_entropy_error(u, N, activation_function, T,  differential=False):
-    
-    if differential:
-        pass
-    print("未実装 :" + inspect.currentframe().f_code.co_name)
+#     ###print("未実装 :" + inspect.currentframe().f_code.co_name)

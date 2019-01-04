@@ -6,13 +6,29 @@
 ## つまりW_lはz_lの列数(inputsize)を保存して、 W_l.shape = (forwardlayer.inputsize, self.inputsize)
 # もちろん z_l = h^{l-]}(u_l)
 
-
+import os
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from func import * # 関数リスト
 
+
+class Data(object):
+    """ラベルとデータを管理するクラス
+    データ X = (データ数N, データの次元d)
+    ラベル T = (データ数N, 分類数K）"""
+    def __init__(self, X, T):
+        self.X = X
+        self.T = T
+        self.dim = np.shape(self.X)[1]
+        self.category = np.shape(self.T)[1]
+    
+    def __len__(self):
+        return np.shape(self.X)[0] # N
+
+
 class Layer(object): # l番目のやつの情報をすべて持つだけにしようと思う
-    """レイヤの親クラス"""
+    """レイヤのクラス"""
 
     def __init__(self, layer_index, unit_number, activation_function=sigmoid, weight_init=0.01, learning_rate=0.01):
         """
@@ -122,9 +138,11 @@ class NeuralNet(object):
         for layer in self.network:
             layer.init_weight()
 
-    def train(self, X, T):
+    def train(self, data, info=True):
         """学習を1反復行う（バッチ）"""
-        N = np.shape(X)[0]
+        N = len(data)
+        X = data.X
+        T = data.T
 
         # 1. input_layerのzを初期化
         self.network[0].z = X
@@ -151,6 +169,14 @@ class NeuralNet(object):
         """iteration回trainを実行（変数がダブっている）"""
         for _ in range(self.iteration):
             self.train(X, T)
+
+    def set_data(self, train_X, train_T, test_X, test_T):
+        self.train_data = Data(train_X, train_T)
+        self.test_data = Data(test_X, test_T)
+
+
+
+
     
 
 
