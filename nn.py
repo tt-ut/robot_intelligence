@@ -35,11 +35,12 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         forward_layer: 次のレイヤのインスタンス
         backward_layer: 前のレイヤのインスタンス
 
-        input_size: int いわゆる i のこと
-        output_size:int いわゆる j のこと
+        unit_number: l層目のユニット数
+                     W.shape = (backward_layer.unit_number, self.unit_number)
+
         activation_functionがNoneなら個別に活性化関数指定する
         """
-        self.input_size = unit_number 
+        self.unit_number = unit_number 
 
         # つかうやつを列挙だけしておく
         self.z = None 
@@ -56,25 +57,24 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         self.learning_rate = learning_rate
 
     def set_relation(self, backward_layer, forward_layer):
-        """input_layerとoutput_layerの処理を少し変える"""
+        """input_layerとoutput_layerを教える"""
         if backward_layer != None:
             self.backward_layer = backward_layer # l-1
-            self.output_size = self.backward_layer.input_size
-        if forward_layer != None:    
+        if forward_layer != None:
             self.forward_layer = forward_layer   # l+1
             
     def init_weight(self):
         """標準正規分布N(0,1) * e = N(0, e^2)に従うようにする
             バイアスは定数で初期化してもいいかも（分類4参照）"""
         #input_layer以外にW,bを追加
-        
+
         if self.layer_index == 0:
             pass
         else:
-            #self.W = self.weight_init * np.random.randn(self.output_size, self.input_size)
-            #self.b = self.weight_init * np.random.randn(self.input_size)
-            self.W = self.weight_init * np.ones((self.output_size, self.input_size))
-            self.b = self.weight_init + np.ones(self.input_size)
+            #self.W = self.weight_init * np.random.randn(self.backward_layer.unit_number, self.unit_number)
+            #self.b = self.weight_init * np.random.randn(self.unit_number)
+            self.W = self.weight_init * np.ones((self.backward_layer.unit_number, self.unit_number))
+            self.b = self.weight_init + np.ones(self.unit_number)
 
     def forward_propagation(self):
         """forward_layerに受け渡す情報をつくる
