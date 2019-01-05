@@ -30,7 +30,7 @@ class Data(object):
 class Layer(object): # l番目のやつの情報をすべて持つだけにしようと思う
     """レイヤのクラス"""
 
-    def __init__(self, layer_index, unit_number, activation_function=sigmoid, weight_init=0.01, learning_rate=0.01):
+    def __init__(self, layer_index, unit_number, N, activation_function=sigmoid, weight_init=0.01, learning_rate=0.01):
         """
         forward_layer: 次のレイヤのインスタンス
         input_size: int いわゆる i のこと
@@ -47,7 +47,7 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         self.W = None
         self.u = None 
         self.o = None
-        self.N = np.shape(self.z)[0] #ぜったいにここじゃないどこか
+        self.N = N #ぜったいにここじゃないどこか
 
         self.layer_index = layer_index
         self.activation_function = activation_function
@@ -65,8 +65,11 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
     def init_weight(self):
         """標準正規分布N(0,1) * e = N(0, e^2)に従うようにする
             バイアスは定数で初期化してもいいかも（分類4参照）"""
-        self.W = self.weight_init * np.random.randn(self.input_size, self.output_size)
-        self.b = self.weight_init * np.random.randn(self.output_size)
+        if self.layer_index == 0:
+            pass
+        else:
+            self.W = self.weight_init * np.random.randn(self.output_size, self.input_size)
+            self.b = self.weight_init * np.random.randn(self.input_size)
     
     def forward_propagation(self):
         """forward_layerに受け渡す情報をつくる
@@ -92,9 +95,10 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
 class NeuralNet(object):
     """ニューラルネットを生成するクラス"""
 
-    def __init__(self, input_shape, output_shape, layer_list, iteration=10, activation_function=None, loss_function=cross_entropy_error, learning_rate=0.01):
+    def __init__(self, input_shape, output_shape, layer_list, N, iteration=10, activation_function=None, loss_function=cross_entropy_error, learning_rate=0.01):
         """activation_functionがNoneなら個別に指定される必要あり
-        MNISTなら input_shape = 28*28, output_shape = 10 データ数10000はどう表現しようか
+        MNISTなら input_shape = 28*28, output_shape = 10 
+        データ数はどう表現しようか -> とりあえずself.data_number
         layer_list = [100, 24, 24]みたいな？
         """
         self.input_shape = input_shape
@@ -104,6 +108,8 @@ class NeuralNet(object):
         self.learning_rate = learning_rate
         self.network = [] # ここにappendとかしていく
         self.iteration = iteration
+        self.data_number = N
+        self.predicted_raw_data = None
         
         # layer_list = [1, 2, ..., L-1番目のレイヤ次元数]みたいに決める
         # [input_shape, `layer_list, output_shape]の順番で流れる
@@ -112,16 +118,16 @@ class NeuralNet(object):
         ###ネットワークを初期化する###
 
         # 1. input_layerをつくる
-        self.network.append(Layer(0, self.input_shape))
+        self.network.append(Layer(0, self.input_shape, self.data_number))
 
         # 2. hidden_layerをつくる (とりあえず活性化関数はsigmoid)
         layer_index = 1
         for layer_number in layer_list:
-            self.network.append(Layer(layer_index, layer_number))
+            self.network.append(Layer(layer_index, layer_number, self.data_number))
             layer_index += 1
 
         # 3. output_layerをつくる (ソフトマックス回帰をするのでsoftmax)
-        self.network.append(Layer(self.layer_number - 1, self.output_shape, activation_function=softmax))
+        self.network.append(Layer(self.layer_number - 1, self.output_shape, self.data_number, activation_function=softmax))
 
         ## 現時点で self.network = [input_layer, layer1, ..., layer5, output_layer]みたいになってる
 
@@ -133,7 +139,7 @@ class NeuralNet(object):
                 self.network[i].set_relation(self.network[i-1], None)
             else:
                 self.network[i].set_relation(self.network[i-1], self.network[i+1])
-        
+
         # 5. 重みの初期化
         for layer in self.network:
             layer.init_weight()
@@ -181,7 +187,7 @@ class NeuralNet(object):
             もう少し情報をprintする"""
         for i in range(self.iteration):
             self.train()
-            print("iteration {} finished".format(i))
+            print("iteration {} finished".format(i+1))
 
     def set_data(self, train_data, test_data):
         """Data型で渡す"""

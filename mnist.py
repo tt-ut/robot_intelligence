@@ -13,7 +13,7 @@ def make_onehot_for_mnist(target):
     CATEGORY_NUMBER = 10
     T = np.zeros((len(target), CATEGORY_NUMBER))
     for i in range(len(target)):
-        T[i][target[i]] = 1
+        T[i][int(target[i])] = 1
     return T
 
 def make_mnist_data():
