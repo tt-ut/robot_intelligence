@@ -30,16 +30,6 @@ class Layer(object):
                       W.shape = (backward_layer.unit_number, self.unit_number)
         """
         self.unit_number = unit_number 
-
-        # つかうやつを列挙だけしておく
-        self.z = None 
-        self.dW = None
-        self.db = None
-        self.delta = None 
-        self.W = None
-        self.u = None 
-        self.o = None
-
         self.layer_index = layer_index
         self.activation_function = activation_function
         self.weight_init = weight_init
@@ -192,9 +182,7 @@ class NeuralNet(object):
 
     def accuracy(self):
         """テストデータに対し精度を返す"""
-        if self.predicted_raw_data == None:
-            self.predict()
-        
+        self.predict()
         # 各々のデータに対し最大値だったインデックスを返す(理想的には一致)
         predicted_index_list = list(np.argmax(self.predicted_raw_data, axis=1))
         index_list = list(np.argmax(self.test_data.T, axis=1))
@@ -206,6 +194,7 @@ class NeuralNet(object):
                 count+=1
         
         return float(count / len(predicted_index_list))
+
 
 
 
