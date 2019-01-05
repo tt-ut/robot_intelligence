@@ -23,5 +23,4 @@ def softmax(x):
 
 def cross_entropy_error(X, T, N):
     return -1 * np.sum(np.log(X) * T) / N
-
-#     ###print("未実装 :" + inspect.currentframe().f_code.co_name)
+    

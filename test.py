@@ -10,6 +10,7 @@ net = NeuralNet(28*28, 10, [100], iteration=500, learning_rate=0.02)
 net.set_data(train_data, test_data)
 
 net.train()
+net.predict()
 
 ans = net.accuracy()
 

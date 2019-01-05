@@ -8,7 +8,7 @@ from nn import Data
 
 # mnistの手書き数字データをダウンロード
 
-def make_onehot_for_mnist(target):
+def _make_onehot_for_mnist(target):
     """mnistのtargetをonehotにする"""
     CATEGORY_NUMBER = 10
     T = np.zeros((len(target), CATEGORY_NUMBER))
@@ -16,17 +16,17 @@ def make_onehot_for_mnist(target):
         T[i][int(target[i])] = 1
     return T
 
-def make_mnist_data():
+def _make_mnist_data():
     """mnistのデータをすべて都合いい形にする"""
     mnist = fetch_mldata('MNIST original', data_home="mnist/")
     data = copy.deepcopy(mnist.data / 255.0) # (70000, 784)
-    label = make_onehot_for_mnist(mnist.target) # (70000, 10)
+    label = _make_onehot_for_mnist(mnist.target) # (70000, 10)
 
     return data, label
 
 def make_train_and_test_data(N, M):
     """ランダムにN+M個のデータを取り出して、訓練N個、テストM個"""
-    full_data, full_label = make_mnist_data()
+    full_data, full_label = _make_mnist_data()
     full_data_number = np.shape(full_data)[0]
 
     if full_data_number < N+M:
