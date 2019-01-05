@@ -39,7 +39,6 @@ def make_train_and_test_data(N, M):
     # Data型に格納する
     train_dataset = Data(full_data[train_mask], full_label[train_mask])
     test_dataset = Data(full_data[test_mask], full_label[test_mask])
-
     return train_dataset, test_dataset
 
 
