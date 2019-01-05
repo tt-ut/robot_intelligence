@@ -30,11 +30,11 @@ class Data(object):
 class Layer(object): # l番目のやつの情報をすべて持つだけにしようと思う
     """レイヤのクラス"""
 
-    def __init__(self, layer_index, unit_number, activation_function=sigmoid, weight_init=0.01, learning_rate=0.01):
+    def __init__(self, layer_index, unit_number, activation_function=sigmoid, weight_init=0.1, learning_rate=0.01):
         """
         forward_layer: 次のレイヤのインスタンス
         backward_layer: 前のレイヤのインスタンス
-        
+
         input_size: int いわゆる i のこと
         output_size:int いわゆる j のこと
         activation_functionがNoneなら個別に活性化関数指定する
@@ -69,8 +69,11 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         if self.layer_index == 0:
             pass
         else:
-            self.W = self.weight_init * np.random.randn(self.output_size, self.input_size)
-            self.b = self.weight_init * np.random.randn(self.input_size)
+            #self.W = self.weight_init * np.random.randn(self.output_size, self.input_size)
+            #self.b = self.weight_init * np.random.randn(self.input_size)
+            self.W = self.weight_init * np.ones((self.output_size, self.input_size))
+            self.b = self.weight_init + np.ones(self.input_size)
+
     
     def forward_propagation(self):
         """forward_layerに受け渡す情報をつくる
@@ -144,7 +147,7 @@ class NeuralNet(object):
         for layer in self.network:
             layer.init_weight()
 
-    def train(self):
+    def train(self, iter=1):
         """学習を1反復行う（バッチ）"""
         N = len(self.train_data)
         X = self.train_data.X
@@ -182,8 +185,7 @@ class NeuralNet(object):
 
         self.predicted_raw_data = self.network[-1].z
         # print(np.shape(self.predicted_raw_data)) -> (10000, 10)
-
-        # print(self.predicted_raw_data[1:5])
+        print(self.predicted_raw_data[50])
 
     def train_loop(self, epoch=10): # 後々バッチサイズ変えるかもしれないし、でもepochは今いらない
         """iteration回trainを実行（変数がダブっている）

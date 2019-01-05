@@ -19,7 +19,7 @@ def make_onehot_for_mnist(target):
 def make_mnist_data():
     """mnistのデータをすべて都合いい形にする"""
     mnist = fetch_mldata('MNIST original', data_home="mnist/")
-    data = copy.deepcopy(mnist.data) # (70000, 784)
+    data = copy.deepcopy(mnist.data / 255.0) # (70000, 784)
     label = make_onehot_for_mnist(mnist.target) # (70000, 10)
 
     return data, label
@@ -32,7 +32,9 @@ def make_train_and_test_data(N, M):
     if full_data_number < N+M:
         print("割り振れるデータ数は{}個まで".format(full_data_number))
 
-    mask = np.random.choice(list(range(full_data_number)), N+M, replace=False)
+    # mask = np.random.choice(list(range(full_data_number)), N+M, replace=False)
+    # 実験のためにランダム部分をなくす
+    mask = list(range(M+N))
     train_mask = mask[:N]
     test_mask = mask[N:]
 
