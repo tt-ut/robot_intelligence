@@ -32,13 +32,8 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
 
     def __init__(self, layer_index, unit_number, activation_function=sigmoid, weight_init=0.01, learning_rate=None):
         """
-        forward_layer: 次のレイヤのインスタンス
-        backward_layer: 前のレイヤのインスタンス
-
         unit_number: l層目のユニット数
-                     W.shape = (backward_layer.unit_number, self.unit_number)
-
-        activation_functionがNoneなら個別に活性化関数指定する
+                      W.shape = (backward_layer.unit_number, self.unit_number)
         """
         self.unit_number = unit_number 
 
@@ -57,11 +52,15 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         self.learning_rate = learning_rate
 
     def set_relation(self, backward_layer, forward_layer):
-        """input_layerとoutput_layerを教える"""
+        """input_layerとoutput_layerを教える
+            forward_layer: 次のレイヤのインスタンス   l+1
+            backward_layer: 前のレイヤのインスタンス  l-1
+        """
+
         if backward_layer != None:
-            self.backward_layer = backward_layer # l-1
+            self.backward_layer = backward_layer 
         if forward_layer != None:
-            self.forward_layer = forward_layer   # l+1
+            self.forward_layer = forward_layer
             
     def init_weight(self):
         """標準正規分布N(0,1) * e = N(0, e^2)に従うようにする
@@ -71,10 +70,10 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         if self.layer_index == 0:
             pass
         else:
-            #self.W = self.weight_init * np.random.randn(self.backward_layer.unit_number, self.unit_number)
-            #self.b = self.weight_init * np.random.randn(self.unit_number)
-            self.W = self.weight_init * np.ones((self.backward_layer.unit_number, self.unit_number))
-            self.b = self.weight_init + np.ones(self.unit_number)
+            self.W = self.weight_init * np.random.randn(self.backward_layer.unit_number, self.unit_number)
+            self.b = self.weight_init * np.random.randn(self.unit_number)
+            #self.W = self.weight_init**2 * np.ones((self.backward_layer.unit_number, self.unit_number))
+            #self.b = self.weight_init * np.zeros(self.unit_number)
 
     def forward_propagation(self):
         """forward_layerに受け渡す情報をつくる
@@ -100,38 +99,40 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
 class NeuralNet(object):
     """ニューラルネットを生成するクラス"""
 
-    def __init__(self, input_shape, output_shape, layer_list, iteration=10, activation_function=None, loss_function=cross_entropy_error, learning_rate=0.01):
+    def __init__(self, input_dim, output_dim, hidden_layer_list, iteration=10, activation_function=None, loss_function=cross_entropy_error, learning_rate=0.01):
         """activation_functionがNoneなら個別に指定される必要あり
-        MNISTなら input_shape = 28*28, output_shape = 10 
-        データ数はどう表現しようか -> とりあえずself.data_number
-        layer_list = [100, 24, 24]みたいな？
+        MNISTなら input_dim = 28*28, output_dim = 10 
+        データ数はどう表現しようか -> とりあえずself.data_number -> 廃止
+        hidden_layer_list = [100, 24, 24]みたいな？
         """
-        self.input_shape = input_shape
-        self.output_shape = output_shape
+
+        self.input_dim = input_dim
+        self.output_dim = output_dim
         self.loss_function = loss_function
         self.activation_function = activation_function # 暫く使わない
         self.learning_rate = learning_rate
-        self.network = [] # ここにappendとかしていく
+        self.network = [] # ここにappendしていく
         self.iteration = iteration
         self.predicted_raw_data = None
         
-        # layer_list = [1, 2, ..., L-1番目のレイヤ次元数]みたいに決める
-        # [input_shape, `layer_list, output_shape]の順番で流れる
-        self.layer_number = len(layer_list) + 2 # == self.networkの長さ
+        # hidden_layer_list = [1, 2, ..., L-1番目のレイヤ次元数]みたいに決める
+        # [input_dim, `hidden_layer_list, output_dim]の順番で流れる
+
+        self.layer_number = len(hidden_layer_list) + 2 # == self.networkの長さ 
 
         ###ネットワークを初期化する###
 
         # 1. input_layerをつくる
-        self.network.append(Layer(0, self.input_shape, learning_rate=learning_rate))
+        self.network.append(Layer(0, self.input_dim, learning_rate=learning_rate))
 
-        # 2. hidden_layerをつくる (とりあえず活性化関数はsigmoid)
+        # 2. hidden_layerをつくる (とりあえず活性化関数はsigmoidのまま)
         layer_index = 1
-        for layer_number in layer_list:
+        for layer_number in hidden_layer_list:
             self.network.append(Layer(layer_index, layer_number, learning_rate=learning_rate))
             layer_index += 1
 
         # 3. output_layerをつくる (ソフトマックス回帰をするのでsoftmax)
-        self.network.append(Layer(self.layer_number - 1, self.output_shape, activation_function=softmax, learning_rate=learning_rate))
+        self.network.append(Layer(self.layer_number - 1, self.output_dim, activation_function=softmax, learning_rate=learning_rate))
 
         ## 現時点で self.network = [input_layer, layer1, ..., layer5, output_layer]みたいになってる
 
@@ -143,12 +144,17 @@ class NeuralNet(object):
                 self.network[i].set_relation(self.network[i-1], None)
             else:
                 self.network[i].set_relation(self.network[i-1], self.network[i+1])
-
+                
         # 5. 重みの初期化
         for layer in self.network:
             layer.init_weight()
 
-    def train(self, iter=1):
+    def set_data(self, train_data, test_data):
+        """Data型で渡す"""
+        self.train_data = train_data
+        self.test_data = test_data
+
+    def _train(self):
         """学習を1反復行う（バッチ）"""
         N = len(self.train_data)
         X = self.train_data.X
@@ -175,30 +181,27 @@ class NeuralNet(object):
         for i in range(1, self.layer_number):
             self.network[i].update_weight()
 
+    def train(self):
+        """iteration回_trainを実行（変数がダブっている）
+            もう少し情報をprintする"""
+        for i in range(self.iteration):
+            self._train()
+            print("iteration {} finished".format(i+1))
+
     def predict(self):
         """学習済みのWとbを用いてtest_dataを予測する"""
         X = self.test_data.X
         # print(np.shape(X)) -> (10000, 784)
         self.network[0].z = X
 
+        # テストデータに対して順伝播する
         for i in range(1, self.layer_number):
             self.network[i].forward_propagation()
 
         self.predicted_raw_data = self.network[-1].z
+
         # print(np.shape(self.predicted_raw_data)) -> (10000, 10)
         print(self.predicted_raw_data[50])
-
-    def train_loop(self, epoch=10): # 後々バッチサイズ変えるかもしれないし、でもepochは今いらない
-        """iteration回trainを実行（変数がダブっている）
-            もう少し情報をprintする"""
-        for i in range(self.iteration):
-            self.train()
-            print("iteration {} finished".format(i+1))
-
-    def set_data(self, train_data, test_data):
-        """Data型で渡す"""
-        self.train_data = train_data
-        self.test_data = test_data
 
     def accuracy(self):
         if self.predicted_raw_data == None:

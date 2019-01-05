@@ -32,9 +32,9 @@ def make_train_and_test_data(N, M):
     if full_data_number < N+M:
         print("割り振れるデータ数は{}個まで".format(full_data_number))
 
-    # mask = np.random.choice(list(range(full_data_number)), N+M, replace=False)
+    mask = np.random.choice(list(range(full_data_number)), N+M, replace=False)
     # 実験のためにランダム部分をなくす
-    mask = list(range(M+N))
+    # mask = list(range(M+N))
     train_mask = mask[:N]
     test_mask = mask[N:]
 
