@@ -72,7 +72,7 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
         """forward_layerに受け渡す情報をつくる
         のはやめて普通にやる"""
         self.u = np.dot(self.backward_layer.z, self.W) + self.b
-        self.z = self.backward_layer.activation_function(self.u)
+        self.z = self.activation_function(self.u)
 
     def back_propagation(self):
         """forward_layerの情報からdW, dbをつくる
@@ -92,7 +92,7 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
 class NeuralNet(object):
     """ニューラルネットを生成するクラス"""
 
-    def __init__(self, input_shape, output_shape, layer_list, iteration, activation_function=None, loss_function=cross_entropy_error, learning_rate=0.01):
+    def __init__(self, input_shape, output_shape, layer_list, iteration=10, activation_function=None, loss_function=cross_entropy_error, learning_rate=0.01):
         """activation_functionがNoneなら個別に指定される必要あり
         MNISTなら input_shape = 28*28, output_shape = 10 データ数10000はどう表現しようか
         layer_list = [100, 24, 24]みたいな？
@@ -165,14 +165,46 @@ class NeuralNet(object):
         for i in range(1, self.layer_number):
             self.network[i].update_weight()
 
-    def train_loop(self, epoch=10): # 後々バッチサイズ変えるかもしれないし、でもepochは今いらない
-        """iteration回trainを実行（変数がダブっている）"""
-        for _ in range(self.iteration):
-            self.train()
+    def predict(self):
+        """学習済みのWとbを用いてtest_dataを予測する"""
+        X = self.test_data.X
 
-    def set_data(self, train_X, train_T, test_X, test_T):
-        self.train_data = Data(train_X, train_T)
-        self.test_data = Data(test_X, test_T)
+        self.network[0].z = X
+
+        for i in range(1, self.layer_number):
+            self.network[i].forward_propagation()
+
+        self.predicted_raw_data = self.network[-1].z # Tと同じ形になってるはず
+
+    def train_loop(self, epoch=10): # 後々バッチサイズ変えるかもしれないし、でもepochは今いらない
+        """iteration回trainを実行（変数がダブっている）
+            もう少し情報をprintする"""
+        for i in range(self.iteration):
+            self.train()
+            print("iteration {} finished".format(i))
+
+    def set_data(self, train_data, test_data):
+        """Data型で渡す"""
+        self.train_data = train_data
+        self.test_data = test_data
+
+    def accuracy(self):
+        if self.predicted_raw_data == None:
+            self.predict()
+        predicted_index_list = list(np.argmax(self.predicted_raw_data, axis=1))
+        index_list = list(np.argmax(self.test_data.T, axis=1))
+
+        count = 0
+        for i in range(len(predicted_index_list)):
+            if predicted_index_list[i] == index_list[i]:
+                count+=1
+        
+        return float(count / len(predicted_index_list))
+
+
+
+    
+
 
 
 

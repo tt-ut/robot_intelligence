@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 from sklearn.datasets import fetch_mldata
 import copy
-from nn import *
+from nn import Data
 
 # mnistの手書き数字データをダウンロード
 
