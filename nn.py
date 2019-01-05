@@ -30,7 +30,7 @@ class Data(object):
 class Layer(object): # l番目のやつの情報をすべて持つだけにしようと思う
     """レイヤのクラス"""
 
-    def __init__(self, layer_index, unit_number, activation_function=sigmoid, weight_init=0.1, learning_rate=0.01):
+    def __init__(self, layer_index, unit_number, activation_function=sigmoid, weight_init=0.01, learning_rate=None):
         """
         forward_layer: 次のレイヤのインスタンス
         backward_layer: 前のレイヤのインスタンス
@@ -74,7 +74,6 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
             self.W = self.weight_init * np.ones((self.output_size, self.input_size))
             self.b = self.weight_init + np.ones(self.input_size)
 
-    
     def forward_propagation(self):
         """forward_layerに受け渡す情報をつくる
         のはやめて普通にやる"""
@@ -92,8 +91,8 @@ class Layer(object): # l番目のやつの情報をすべて持つだけにし�
 
     def update_weight(self):
         """重みを更新"""
-        self.W = self.W - self.learning_rate * self.W
-        self.b = self.b - self.learning_rate * self.b
+        self.W = self.W - self.learning_rate * self.dW
+        self.b = self.b - self.learning_rate * self.db
 
 
 class NeuralNet(object):

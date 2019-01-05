@@ -10,7 +10,7 @@ def ReLU(x, differential=False):
         return x * (x >= 0)
 
 def sigmoid(x, differential=False):
-    sgm = 1.0 / ( 1 + np.exp(-1 * x))
+    sgm = 1.0 / (1 + np.exp(-1 * x))
     if differential:
         return (1 - sgm) * sgm
     else:
